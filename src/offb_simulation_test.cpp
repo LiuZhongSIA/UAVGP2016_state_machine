@@ -30,7 +30,7 @@
 #define VISION_SCAN_DISTANCE 4.5  /* distance from UAV to drawing board while hoveing and scanning. */
 #define SCREEN_HEIGHT 3 /* height of screen(not used). */
 #define SAFE_HEIGHT_DISTANCE 2  /* distanche from drawing board's height to expected height: 0: real mission; >0: for safe. */
-#define FIXED_POS_HEIGHT 2
+#define FIXED_POS_HEIGHT 3
 
 #include <math.h>
 
@@ -323,6 +323,11 @@ void fixed_target_position_p2m_cb(const state_machine::FIXED_TARGET_POSITION_P2M
 
 }
 
+/* publish messages to pixhawk. -libn */
+state_machine::OBSTACLE_POSITION_M2P obstacle_position_m2p_data;
+state_machine::TASK_STATUS_MONITOR_M2P task_status_monitor_m2p_data;
+state_machine::VISION_NUM_SCAN_M2P vision_num_scan_m2p_data;
+state_machine::VISION_ONE_NUM_GET_M2P vision_one_num_get_m2p_data;
 state_machine::TASK_STATUS_CHANGE_P2M task_status_change_p2m_data;
 void task_status_change_p2m_cb(const state_machine::TASK_STATUS_CHANGE_P2M::ConstPtr& msg){
 	task_status_change_p2m_data = *msg;
@@ -340,11 +345,6 @@ void vision_num_cb(const std_msgs::Int32::ConstPtr& msg){
     ROS_INFO("subscribing vision_num_data = %d", vision_num_data.data);
 }
 
-/* publish messages to pixhawk. -libn */
-state_machine::OBSTACLE_POSITION_M2P obstacle_position_m2p_data;
-state_machine::TASK_STATUS_MONITOR_M2P task_status_monitor_m2p_data;
-state_machine::VISION_NUM_SCAN_M2P vision_num_scan_m2p_data;
-state_machine::VISION_ONE_NUM_GET_M2P vision_one_num_get_m2p_data;
 
 std_msgs::Int32 camera_switch_data;
 ros::Publisher  camera_switch_pub;
@@ -497,9 +497,9 @@ int main(int argc, char **argv)
         for(int co = 0; co<10; ++co)
         {
             board10.drawingboard[co].valid = true;
-            board10.drawingboard[co].x = 0.0f;
-            board10.drawingboard[co].y = 0.0f;
-            board10.drawingboard[co].z = 0.0f;  /* it's safe for we have SAFE_HEIGHT_DISTANCE. */
+            board10.drawingboard[co].x = 15.0f;
+            board10.drawingboard[co].y = 15.0f;
+            board10.drawingboard[co].z = 3.0f;  /* it's safe for we have SAFE_HEIGHT_DISTANCE. */
         }
         current_mission_num = 0;    /* set current_mission_num as 0 as default. */
         last_mission_num = 0;
@@ -865,7 +865,7 @@ void state_machine_func(void)
         	}
             break;
         case mission_observe_point_go:
-        	if(loop > 5)
+            if(loop > 1)
 			{
                 current_mission_state = mission_num_done; // current_mission_state++;
 				break;
@@ -919,25 +919,17 @@ void state_machine_func(void)
 //			{
 //				current_mission_state = mission_num_search; // current_mission_state++;
 //			}
-			//time delay added(just for test! --delete it directly!)
-            if(current_mission_num == last_mission_num)
+            if(ros::Time::now() - mission_last_time > ros::Duration(1))	/* hover for 1 seconds. -libn */
             {
-                current_mission_state = mission_observe_num_wait; // stop mission_state++, avoid repeating spraying. ;
-            }
-            else    /* valid number detected. */
-            {
-                if(ros::Time::now() - mission_last_time > ros::Duration(1))	/* hover for 1 seconds. -libn */
-                {
-                    current_mission_state = mission_num_search; // current_mission_state++;
+                current_mission_state = mission_num_search; // current_mission_state++;
 
-                    /* change and publish camera_switch_data for next subtask. */
-                    /*  camera_switch: 0: mission closed; 1: vision_one_num_get; 2: vision_num_scan. -libn */
-                    camera_switch_data.data = 2;
-                    camera_switch_pub.publish(camera_switch_data);
-                    ROS_INFO("send camera_switch_data = %d",(int)camera_switch_data.data);
+                /* change and publish camera_switch_data for next subtask. */
+                /*  camera_switch: 0: mission closed; 1: vision_one_num_get; 2: vision_num_scan. -libn */
+                camera_switch_data.data = 2;
+                camera_switch_pub.publish(camera_switch_data);
+                ROS_INFO("send camera_switch_data = %d",(int)camera_switch_data.data);
 
-                    last_mission_num = current_mission_num;
-                }
+                last_mission_num = current_mission_num;
             }
 
             break;
@@ -1058,7 +1050,7 @@ void state_machine_func(void)
             if(ros::Time::now() - mission_last_time > ros::Duration(2))	/* spray for 5 seconds. -libn */
             {
                 loop++;	/* switch to next loop. -libn */
-                if(loop > 5)
+                if(loop > 1)
                 {
                     current_mission_state = mission_num_done; // current_mission_state++;
                 }
