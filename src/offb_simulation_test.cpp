@@ -859,7 +859,7 @@ void state_machine_func(void)
         	pose_pub.pose.position.x = current_pos.pose.position.x;
         	pose_pub.pose.position.y = current_pos.pose.position.y;
         	pose_pub.pose.position.z = setpoint_H.pose.position.z;
-            if(ros::Time::now() - mission_last_time > ros::Duration(3))	/* hover for 5 seconds. -libn */
+            if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 5 seconds. -libn */
         	{
                 current_mission_state = mission_observe_point_go; // current_mission_state++;
         	}
@@ -919,7 +919,7 @@ void state_machine_func(void)
 //			{
 //				current_mission_state = mission_num_search; // current_mission_state++;
 //			}
-            if(ros::Time::now() - mission_last_time > ros::Duration(1))	/* hover for 1 seconds. -libn */
+            if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 10 seconds. -libn */
             {
                 current_mission_state = mission_num_search; // current_mission_state++;
 
@@ -981,7 +981,7 @@ void state_machine_func(void)
 
 			if(relocate_valid)
 			{
-                if(ros::Time::now() - mission_last_time > ros::Duration(5))	/* hover for 5 seconds. -libn */
+                if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 5 seconds. -libn */
                 {
                     current_mission_state = mission_num_get_close; // current_mission_state++;
                     mission_last_time = ros::Time::now();
@@ -1025,7 +1025,7 @@ void state_machine_func(void)
             pose_pub.pose.position.x = board10.drawingboard[current_mission_num].x - SPRAY_DISTANCE * cos(yaw_sp_calculated_m2p_data.yaw_sp);	/* TODO:switch to different board positions. -libn */
             pose_pub.pose.position.y = board10.drawingboard[current_mission_num].y - SPRAY_DISTANCE * sin(yaw_sp_calculated_m2p_data.yaw_sp);
             pose_pub.pose.position.z = board10.drawingboard[current_mission_num].z + SAFE_HEIGHT_DISTANCE;
-            if(ros::Time::now() - mission_last_time > ros::Duration(2))	/* hover for 5 seconds. -libn */
+            if(ros::Time::now() - mission_last_time > ros::Duration(1))	/* hover for 5 seconds. -libn */
         	{
                 current_mission_state = mission_num_hover_spray; // current_mission_state++;
         		mission_last_time = ros::Time::now();
@@ -1047,7 +1047,7 @@ void state_machine_func(void)
             pose_pub.pose.position.x = current_pos.pose.position.x;	/* hover in current position. -libn */
             pose_pub.pose.position.y = current_pos.pose.position.y;
             pose_pub.pose.position.z = current_pos.pose.position.z;
-            if(ros::Time::now() - mission_last_time > ros::Duration(2))	/* spray for 5 seconds. -libn */
+            if(ros::Time::now() - mission_last_time > ros::Duration(1))	/* spray for 5 seconds. -libn */
             {
                 loop++;	/* switch to next loop. -libn */
                 if(loop > 1)
