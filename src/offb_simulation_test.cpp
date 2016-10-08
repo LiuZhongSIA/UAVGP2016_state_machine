@@ -1114,7 +1114,7 @@ void state_machine_func(void)
 			pose_pub.pose.position.x = setpoint_H.pose.position.x;
 			pose_pub.pose.position.y = setpoint_H.pose.position.y;
 			pose_pub.pose.position.z = setpoint_H.pose.position.z;
-            if(ros::Time::now() - mission_last_time > ros::Duration(5))	/* hover for 2 seconds. -libn */
+            if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 2 seconds. -libn */
 			{
 				current_mission_state = land; // current_mission_state++;
 			}
