@@ -29,7 +29,7 @@
 #define SPRAY_DISTANCE 4  /* distance from UAV to drawing board while sparying. */
 #define VISION_SCAN_DISTANCE 4.5  /* distance from UAV to drawing board while hoveing and scanning. */
 #define SCREEN_HEIGHT 3 /* height of screen(not used). */
-#define SAFE_HEIGHT_DISTANCE 2  /* distanche from drawing board's height to expected height: 0: real mission; >0: for safe. */
+#define SAFE_HEIGHT_DISTANCE 3  /* distanche from drawing board's height to expected height: 0: real mission; >0: for safe. */
 #define FIXED_POS_HEIGHT 3
 
 #include <math.h>
@@ -497,7 +497,7 @@ int main(int argc, char **argv)
         for(int co = 0; co<10; ++co)
         {
             board10.drawingboard[co].valid = true;
-            board10.drawingboard[co].x = 15.0f;
+            board10.drawingboard[co].x = -15.0f;
             board10.drawingboard[co].y = 15.0f;
             board10.drawingboard[co].z = 0.0f;  /* it's safe for we have SAFE_HEIGHT_DISTANCE. */
         }
@@ -712,13 +712,13 @@ int main(int argc, char **argv)
         if(!velocity_control_enable)    /* position control. */
         {
             /* limit error(x,y) between current position and destination within [-1,1]. */
-            if(abs(pose_pub.pose.position.x - current_pos.pose.position.x) > 1 ||
-                abs(pose_pub.pose.position.y - current_pos.pose.position.y) > 1)
+            if(abs(pose_pub.pose.position.x - current_pos.pose.position.x) > 3 ||
+                abs(pose_pub.pose.position.y - current_pos.pose.position.y) > 3)
             {
                 double error_temp[2] = {0,0};
                 error_limit(current_pos.pose.position.x,current_pos.pose.position.y,pose_pub.pose.position.x,pose_pub.pose.position.y,error_temp);
-                pose_pub.pose.position.x = current_pos.pose.position.x + error_temp[0];
-                pose_pub.pose.position.y = current_pos.pose.position.y + error_temp[1];
+                pose_pub.pose.position.x = current_pos.pose.position.x + 3*error_temp[0];
+                pose_pub.pose.position.y = current_pos.pose.position.y + 3*error_temp[1];
             }
         }
 
