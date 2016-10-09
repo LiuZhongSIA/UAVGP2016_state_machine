@@ -712,13 +712,13 @@ int main(int argc, char **argv)
         if(!velocity_control_enable)    /* position control. */
         {
             /* limit error(x,y) between current position and destination within [-1,1]. */
-            if(abs(pose_pub.pose.position.x - current_pos.pose.position.x) > 3 ||
-                abs(pose_pub.pose.position.y - current_pos.pose.position.y) > 3)
+            if(abs(pose_pub.pose.position.x - current_pos.pose.position.x) > 30 ||
+                abs(pose_pub.pose.position.y - current_pos.pose.position.y) > 30)
             {
                 double error_temp[2] = {0,0};
                 error_limit(current_pos.pose.position.x,current_pos.pose.position.y,pose_pub.pose.position.x,pose_pub.pose.position.y,error_temp);
-                pose_pub.pose.position.x = current_pos.pose.position.x + 3*error_temp[0];
-                pose_pub.pose.position.y = current_pos.pose.position.y + 3*error_temp[1];
+                pose_pub.pose.position.x = current_pos.pose.position.x + 30*error_temp[0];
+                pose_pub.pose.position.y = current_pos.pose.position.y + 30*error_temp[1];
             }
         }
 
