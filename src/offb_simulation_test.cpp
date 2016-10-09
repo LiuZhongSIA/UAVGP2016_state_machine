@@ -815,7 +815,7 @@ void state_machine_func(void)
 			vel_pub.twist.angular.x = 0.0f;
 			vel_pub.twist.angular.y = 0.0f;
 			vel_pub.twist.angular.z = 0.0f;
-            if(current_vel.twist.linear.z > 1 &&
+            if(current_vel.twist.linear.z > 0.5 &&
                current_pos.pose.position.z > 1)
             {
                 ROS_INFO("current_vel.twist.linear.x = %f",current_vel.twist.linear.x);
@@ -1059,6 +1059,7 @@ void state_machine_func(void)
                     current_mission_state = mission_observe_point_go; // current_mission_state++;
                 }
             }
+            break;
         case mission_num_done:
         	loop_timer_t = ros::Time::now();	/* disable loop_timer. -libn */
         	pose_pub.pose.position.x = current_pos.pose.position.x;	/* hover in current position. -libn */
