@@ -26,8 +26,8 @@
 #include <state_machine/VISION_NUM_SCAN_M2P.h>
 #include <state_machine/VISION_ONE_NUM_GET_M2P.h>
 #include <state_machine/YAW_SP_CALCULATED_M2P.h>
-#define SPRAY_DISTANCE 4  /* distance from UAV to drawing board while sparying. */
-#define VISION_SCAN_DISTANCE 4.5  /* distance from UAV to drawing board while hoveing and scanning. */
+#define SPRAY_DISTANCE 2  /* distance from UAV to drawing board while sparying. */
+#define VISION_SCAN_DISTANCE 2.5  /* distance from UAV to drawing board while hoveing and scanning. */
 #define SCREEN_HEIGHT 3 /* height of screen(not used). */
 #define SAFE_HEIGHT_DISTANCE 3  /* distanche from drawing board's height to expected height: 0: real mission; >0: for safe. */
 #define FIXED_POS_HEIGHT 3
@@ -712,13 +712,13 @@ int main(int argc, char **argv)
         if(!velocity_control_enable)    /* position control. */
         {
             /* limit error(x,y) between current position and destination within [-1,1]. */
-            if(abs(pose_pub.pose.position.x - current_pos.pose.position.x) > 30 ||
-                abs(pose_pub.pose.position.y - current_pos.pose.position.y) > 30)
+            if(abs(pose_pub.pose.position.x - current_pos.pose.position.x) > 50 ||
+                abs(pose_pub.pose.position.y - current_pos.pose.position.y) > 50)
             {
                 double error_temp[2] = {0,0};
                 error_limit(current_pos.pose.position.x,current_pos.pose.position.y,pose_pub.pose.position.x,pose_pub.pose.position.y,error_temp);
-                pose_pub.pose.position.x = current_pos.pose.position.x + 30*error_temp[0];
-                pose_pub.pose.position.y = current_pos.pose.position.y + 30*error_temp[1];
+                pose_pub.pose.position.x = current_pos.pose.position.x + 50*error_temp[0];
+                pose_pub.pose.position.y = current_pos.pose.position.y + 50*error_temp[1];
             }
         }
 
@@ -859,7 +859,7 @@ void state_machine_func(void)
         	pose_pub.pose.position.x = current_pos.pose.position.x;
         	pose_pub.pose.position.y = current_pos.pose.position.y;
         	pose_pub.pose.position.z = setpoint_H.pose.position.z;
-            if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 5 seconds. -libn */
+            if(ros::Time::now() - mission_last_time > ros::Duration(15))	/* hover for 5 seconds. -libn */
         	{
                 current_mission_state = mission_observe_point_go; // current_mission_state++;
         	}
@@ -919,7 +919,7 @@ void state_machine_func(void)
 //			{
 //				current_mission_state = mission_num_search; // current_mission_state++;
 //			}
-            if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 10 seconds. -libn */
+            if(ros::Time::now() - mission_last_time > ros::Duration(15))	/* hover for 10 seconds. -libn */
             {
                 current_mission_state = mission_num_search; // current_mission_state++;
 
@@ -981,7 +981,7 @@ void state_machine_func(void)
 
 			if(relocate_valid)
 			{
-                if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 5 seconds. -libn */
+                if(ros::Time::now() - mission_last_time > ros::Duration(15))	/* hover for 5 seconds. -libn */
                 {
                     current_mission_state = mission_num_get_close; // current_mission_state++;
                     mission_last_time = ros::Time::now();
@@ -1095,7 +1095,7 @@ void state_machine_func(void)
 			loop_timer_t = ros::Time::now();	/* disable loop_timer. -libn */
 			pose_pub.pose.position.x = setpoint_H.pose.position.x;
 			pose_pub.pose.position.y = setpoint_H.pose.position.y;
-			pose_pub.pose.position.z = setpoint_H.pose.position.z;
+            pose_pub.pose.position.z = setpoint_H.pose.position.z+1.0f;
 //			ROS_INFO("start mission_return_home");
 //			ROS_INFO("setpoint_H*: %5.3f %5.3f %5.3f",setpoint_H.pose.position.x,setpoint_H.pose.position.y,setpoint_H.pose.position.z);
 //			ROS_INFO("current position --2 : %5.3f %5.3f %5.3f",current_pos.pose.position.x,current_pos.pose.position.y,current_pos.pose.position.z);
@@ -1114,8 +1114,8 @@ void state_machine_func(void)
 			loop_timer_t = ros::Time::now();	/* disable loop_timer. -libn */
 			pose_pub.pose.position.x = setpoint_H.pose.position.x;
 			pose_pub.pose.position.y = setpoint_H.pose.position.y;
-			pose_pub.pose.position.z = setpoint_H.pose.position.z;
-            if(ros::Time::now() - mission_last_time > ros::Duration(10))	/* hover for 2 seconds. -libn */
+            pose_pub.pose.position.z = setpoint_H.pose.position.z+1.0f;
+            if(ros::Time::now() - mission_last_time > ros::Duration(15))	/* hover for 2 seconds. -libn */
 			{
 				current_mission_state = land; // current_mission_state++;
 			}
