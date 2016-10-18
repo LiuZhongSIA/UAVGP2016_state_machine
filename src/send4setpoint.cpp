@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 //        setpoint_indexed.y = -0.88f;	/* ROS coordinate frame: ENU(East/North/Up) -libn */
 //        setpoint_indexed.z = 2.5f;
 		setpoint_indexed.x = 0.0f;
-        setpoint_indexed.y = 15.0f;	/* ROS coordinate frame: ENU(East/North/Up) -libn */
+        setpoint_indexed.y = 5.0f;	/* ROS coordinate frame: ENU(East/North/Up) -libn */
         setpoint_indexed.z = 3.0f;
 		setpoint_indexed_pub.publish(setpoint_indexed);
 		ros::spinOnce();

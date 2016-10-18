@@ -497,8 +497,8 @@ int main(int argc, char **argv)
         for(int co = 0; co<10; ++co)
         {
             board10.drawingboard[co].valid = true;
-            board10.drawingboard[co].x = -15.0f;
-            board10.drawingboard[co].y = 15.0f;
+            board10.drawingboard[co].x = -5.0f;
+            board10.drawingboard[co].y = 5.0f;
             board10.drawingboard[co].z = 0.0f;  /* it's safe for we have SAFE_HEIGHT_DISTANCE. */
         }
         current_mission_num = 0;    /* set current_mission_num as 0 as default. */
