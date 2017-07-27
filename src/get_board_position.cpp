@@ -39,6 +39,7 @@ void pos_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 }
 
 /* 相机工作模式的切换：不工作or显示屏or喷绘板 */
+// 视觉处理程序应该也订阅了这个消息
 std_msgs::Int32 camera_switch_data;
 ros::Subscriber camera_switch_sub;
 void camera_switch_cb(const std_msgs::Int32::ConstPtr& msg)
@@ -50,10 +51,11 @@ void camera_switch_cb(const std_msgs::Int32::ConstPtr& msg)
 /* 任何视觉信息都通过该msg传输 */
 sensor_msgs::LaserScan board_scan;
 ros::Subscriber board_pos_sub;
-#define MIN_OBSERVE_TIMES 4 /* 4 times. */
+#define MIN_OBSERVE_TIMES 4 /* 4 times. */ //显示屏数字的最小观测次数
 #define MIN_DETECTION_TIMES_FAR 4  /* count_num > MIN_DETECTION_TIMES => num detected; else: num not detected. */
 #define MIN_DETECTION_TIMES_NEAR 2
 #define MAX_DETECTION_DISTANCE 0.5  /* max detected board distance between different loops. */
+                                    //距离喷绘板距不同，所需要的有效观测次数也不一样
 int count_num = 0;
 int count_detection[10] = {0,0,0,0,0,0,0,0,0,0};
 void board_pos_cb(const sensor_msgs::LaserScan::ConstPtr& msg)
@@ -94,6 +96,7 @@ void board_pos_cb(const sensor_msgs::LaserScan::ConstPtr& msg)
     // 2. 喷绘板视觉信息
     if(camera_switch_data.data == 2 && board_scan.ranges[1] < 100 && board_scan.ranges[2] < 100)
     {
+        // 视野范围内有几个数字
         int amout = board_scan.ranges.size()/4;
         /* get vision current detection message. */
         for ( int i = 0; i < amout; ++i )
@@ -190,7 +193,7 @@ int main(int argc, char **argv)
 
     // For 发布，给句柄赋值
     vision_num_pub  = nh.advertise<std_msgs::Int32>("vision_num", 10);
-    board10.drawingboard.resize(10);		/* MUST! -libn */
+    board10.drawingboard.resize(10); /* MUST! -libn */
     DrawingBoard_Position_pub = nh.advertise<state_machine::DrawingBoard10>("DrawingBoard_Position10", 1);
 
     // For 订阅，指明回调函数

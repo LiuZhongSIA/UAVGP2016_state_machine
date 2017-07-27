@@ -15,7 +15,7 @@
 #include <state_machine/SetMode.h>
 #include <state_machine/State.h>
 #include <state_machine/CommandTOL.h>
-#include <state_machine/Setpoint.h>
+#include <state_machine/Setpoint.h> /* 虚拟的航迹点 */
 #include <state_machine/DrawingBoard10.h>
 #include <state_machine/FailureRecord.h>
 
@@ -43,10 +43,11 @@
 #define FIXED_POS_HEIGHT 1 /* height of point: O,L,R. */
 #define TAKEOFF_HEIGHT 1.8 /* height of point H. */
 #define SCAN_HEIGHT 1 /* constant height while scanning. */
+// 预扫速度，没用到
 #define SCAN_MOVE_SPEED 2 /* error bewteen pos* and pos. */
 #define SCAN_VISION_DISTANCE 4
 bool scan_to_get_pos = false; //一个标志位，表示是不是在喷绘阶段预扫喷绘板
-#define MAX_FLIGHT_TIME 240 /* max flight time of whole mission. */
+#define MAX_FLIGHT_TIME 240 /* max flight time of whole mission. */ //50+30×5=200？？
 #define FAILURE_REPAIR 1 /* FAILURE_REPAIR: 0: never repair errores;
                                             1: repair errors. */
 
@@ -57,20 +58,20 @@ static const int takeoff = 1;
 static const int mission_hover_after_takeoff = 2;
 static const int mission_hover_only = 3;
 static const int mission_observe_point_go = 5;
-static const int mission_observe_num_wait = 6;
-static const int mission_num_search = 8;
-static const int mission_num_scan_again = 9;
-static const int mission_num_locate = 10;
-static const int mission_num_get_close = 11;
-static const int mission_arm_spread = 12;
-static const int mission_num_hover_spray = 13;
+static const int mission_observe_num_wait = 6;         //可能可修复
+static const int mission_num_search = 8;               //可修复
+static const int mission_num_scan_again = 9;           //可修复
+static const int mission_num_locate = 10;              //可修复
+static const int mission_num_get_close = 11;           //可修复
+static const int mission_arm_spread = 12;              //可修复
+static const int mission_num_hover_spray = 13;         //不可能发生故障
 static const int mission_num_done = 14;
 static const int mission_return_home = 15;
 static const int land = 16;
 static const int mission_end = 17;
-static const int mission_hover_before_spary = 18;
+static const int mission_hover_before_spary = 18;       //可修复
 static const int mission_fix_failure = 19;
-static const int mission_hover_after_stretch_back = 20;
+static const int mission_hover_after_stretch_back = 20; //不用修复
 static const int mission_force_return_home = 21;
 /* state added for scanning mission. */
 // 为了一开始的预扫
@@ -404,7 +405,7 @@ void fixed_target_position_p2m_cb(const state_machine::FIXED_TARGET_POSITION_P2M
 }
 
 // 订阅修改任务的msg
-// 但是，这条消息没有用上
+// 修改状态的变量没有用到，变量spray_duration会被返回，用于监视
 state_machine::TASK_STATUS_CHANGE_P2M task_status_change_p2m_data;
 state_machine::TASK_STATUS_MONITOR_M2P task_status_monitor_m2p_data;
 void task_status_change_p2m_cb(const state_machine::TASK_STATUS_CHANGE_P2M::ConstPtr& msg){
@@ -434,7 +435,7 @@ int main(int argc, char **argv)
     // --- 订阅 --- //
     // 飞行状态
     ros::Subscriber state_sub = nh.subscribe<state_machine::State>("mavros/state", 10, state_cb);
-    /* receive indexed setpoint. -libn */ //这个订阅没有用
+    /* receive indexed setpoint. -libn */ //实际任务中，这个订阅没有用
     ros::Subscriber setpoint_Indexed_sub = nh.subscribe("Setpoint_Indexed", 100 ,SetpointIndexedCallback);
     /* get pixhawk's local position. -libn */ //飞机位置
     ros::Subscriber local_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, pos_cb);
@@ -451,29 +452,29 @@ int main(int argc, char **argv)
     ros::Subscriber vision_num_sub = nh.subscribe<std_msgs::Int32>("vision_num", 10, vision_num_cb);
 
     // --- 发布 --- //
-    // 发布位置期望，起飞时发布速度期望
+    // 发布位置期望，起飞时发布速度期望（定时发送）
     ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>("/mavros/setpoint_velocity/cmd_vel", 10);
     // 下面两个要发布的service在实际飞行中不会遇到
     ros::ServiceClient arming_client = nh.serviceClient<state_machine::CommandBool>("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<state_machine::SetMode>("mavros/set_mode");
-    // takeoff and land service //降落所要使用的service
+    // takeoff and land service //降落所要使用的service（条件发送）
     ros::ServiceClient land_client = nh.serviceClient<state_machine::CommandTOL>("mavros/cmd/land");
     state_machine::CommandTOL landing_cmd;
     landing_cmd.request.min_pitch = 1.0;
-    /* publish messages to pixhawk. -libn */ //向Pix返回收到的固定位置点
+    /* publish messages to pixhawk. -libn */ //向Pix返回收到的固定位置点（立刻返回）
     fixed_target_return_m2p_pub  = nh.advertise<state_machine::FIXED_TARGET_RETURN_M2P>("mavros/fixed_target_return_m2p", 10);
-    // 返回计算得到的航向期望
+    // 返回计算得到的航向期望（立刻返回）
     yaw_sp_calculated_m2p_pub  = nh.advertise<state_machine::YAW_SP_CALCULATED_M2P>("mavros/yaw_sp_calculated_m2p", 10);
-    // 障碍物信息，没有用到
+    // 障碍物信息（没有用到）
     ros::Publisher  obstacle_position_m2p_pub  = nh.advertise<state_machine::OBSTACLE_POSITION_M2P>("mavros/obstacle_position_m2p", 10);
-    // 回发任务状态
+    // 回发任务状态（定时返回）
     ros::Publisher  task_status_monitor_m2p_pub  = nh.advertise<state_machine::TASK_STATUS_MONITOR_M2P>("mavros/task_status_monitor_m2p", 10);
-    // 回发喷绘板位置信息
+    // 回发喷绘板位置信息（定时返回）
     ros::Publisher  vision_num_scan_m2p_pub  = nh.advertise<state_machine::VISION_NUM_SCAN_M2P>("mavros/vision_num_scan_m2p", 10);
-    // 回发显示屏信息
+    // 回发显示屏信息（定时返回）
     ros::Publisher  vision_one_num_get_m2p_pub  = nh.advertise<state_machine::VISION_ONE_NUM_GET_M2P>("mavros/vision_one_num_get_m2p", 10);
-    // 改变视觉算法工作模式
+    // 改变视觉算法工作模式（条件返回）
     camera_switch_pub  = nh.advertise<std_msgs::Int32>("camera_switch", 10);
     camera_switch_data.data = 0;
 
@@ -691,7 +692,7 @@ int main(int argc, char **argv)
                 // 如果子任务超时，并且总时间没超时
                 // 视为子任务失败，记录当前任务失败的数字，与任务失败的状态
                 /* subtask timer(1 loop). -libn */
-                if(!loop_timer_disable)
+                if(!loop_timer_disable) //这个判断的目的是在喷涂的时候不考虑定时器的限制
                 {
                     if(ros::Time::now() - mission_timer_start_time > ros::Duration((float)(loop*30.0f+50.0f)) &&
                        ros::Time::now() - mission_timer_start_time < ros::Duration(MAX_FLIGHT_TIME + mission_failure_acount * 30.0f) &&
@@ -898,7 +899,8 @@ int main(int argc, char **argv)
     //				vision_num_scan_m2p_data.board_valid);
             // 返回当前显示屏数字
             vision_one_num_get_m2p_data.loop_value = loop;
-            vision_one_num_get_m2p_data.num = current_mission_num;
+            vision_one_num_get_m2p_data.num = current_mission_num; //这样会使得下一个loop在获得新的显示屏数字前，
+                                                                   //保持上一个loop的数字 ？？
             vision_one_num_get_m2p_pub.publish(vision_one_num_get_m2p_data);
     //		ROS_INFO("publishing vision_one_num_get_m2p: %d %d",
     //				vision_one_num_get_m2p_data.loop_value,
@@ -1044,7 +1046,7 @@ void state_machine_func(void)
                 // 如果是在喷绘过程中进行的预扫，并且找到了相应数字
                 if(scan_to_get_pos && board10.drawingboard[current_mission_num].valid)
                 {
-                    current_mission_state = mission_num_locate; //应该是mission_num_search吧
+                    current_mission_state = mission_num_locate; //应该是mission_num_search吧 ？？
                     scan_to_get_pos = false;
                 }
             }
@@ -1486,7 +1488,7 @@ void state_machine_func(void)
             {
                 current_mission_num = failure[mission_failure_acount-1].num;
                 // 有些错误是不用补救或者不能补救的
-                /* deal with failures. */
+                /* deal with failures. */ //还可以更完善 ？？
                 if((failure[mission_failure_acount-1].state > mission_num_search &&   //>=
                     failure[mission_failure_acount-1].state < mission_arm_spread) ||  //<=
                     failure[mission_failure_acount-1].state == mission_hover_before_spary)
